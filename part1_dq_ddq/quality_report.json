@@ -1,0 +1,27 @@
+{
+    "DQ_Metrics": {
+        "Completeness": {
+            "value": 0.801,
+            "pass": false
+        },
+        "Duplicate_Rate": {
+            "value": 0.926,
+            "pass": false
+        },
+        "Format_Validity": {
+            "value": 0.777,
+            "pass": false
+        }
+    },
+    "DDQ_Metrics": {
+        "product_category": {
+            "KL_Divergence": 0.0296,
+            "pass": true
+        },
+        "sentiment": {
+            "KL_Divergence": 0.009,
+            "pass": true
+        }
+    },
+    "Overall_Status": "PASS"
+}
