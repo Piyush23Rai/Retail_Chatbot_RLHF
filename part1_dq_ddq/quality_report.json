@@ -5,21 +5,29 @@
             "pass": false
         },
         "Duplicate_Rate": {
-            "value": 0.926,
+            "value": 0.938,
             "pass": false
         },
         "Format_Validity": {
-            "value": 0.777,
+            "value": 0.778,
             "pass": false
         }
     },
     "DDQ_Metrics": {
         "product_category": {
-            "KL_Divergence": 0.0296,
+            "KL_Divergence": 0.0276,
             "pass": true
         },
         "sentiment": {
-            "KL_Divergence": 0.009,
+            "KL_Divergence": 0.006,
+            "pass": true
+        },
+        "customer_segment": {
+            "KL_Divergence": 0.007,
+            "pass": true
+        },
+        "time_bucket": {
+            "KL_Divergence": 0.0548,
             "pass": true
         }
     },

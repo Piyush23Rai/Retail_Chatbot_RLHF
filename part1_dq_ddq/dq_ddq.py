@@ -5,37 +5,48 @@ from datetime import datetime, timedelta
 from collections import Counter
 from scipy.stats import entropy
 import random
-import re
 
-# -----------------------------
-# 1. DATA GENERATION
-# -----------------------------
+# =========================================================
+# 1. SYNTHETIC DATA GENERATION
+# =========================================================
 def generate_data(n=10000, seed=42):
+    """
+    Generates synthetic ecommerce chat data with realistic
+    quality issues:
+    - Missing values
+    - Duplicates
+    - Invalid timestamp formats
+    - Imbalanced distributions
+    """
+
     np.random.seed(seed)
     random.seed(seed)
 
+    # Core categorical distributions
     categories = ["Electronics", "Clothing", "Others"]
-    category_probs = [0.6, 0.3, 0.1]
+    category_probs = [0.6, 0.3, 0.1]  # Imbalanced by design
 
     sentiments = ["positive", "neutral", "negative"]
     sentiment_probs = [0.5, 0.3, 0.2]
 
+    segments = ["VIP", "regular", "new"]
+    segment_probs = [0.15, 0.65, 0.20]  # Realistic retail mix
+
     outcomes = ["purchase", "abandon", "escalate"]
 
+    base_date = datetime(2019, 1, 1)
     data = []
 
-    base_date = datetime(2019, 1, 1)
-
-    for i in range(n):
-        record = {
+    for _ in range(n):
+        data.append({
             "customer_id": f"CUST_{np.random.randint(1, 4000)}",
+            "customer_segment": np.random.choice(segments, p=segment_probs),
             "product_category": np.random.choice(categories, p=category_probs),
             "sentiment": np.random.choice(sentiments, p=sentiment_probs),
             "timestamp": base_date + timedelta(days=np.random.randint(0, 1800)),
             "conversation_text": "Customer inquiry regarding product usage",
             "outcome": np.random.choice(outcomes)
-        }
-        data.append(record)
+        })
 
     df = pd.DataFrame(data)
 
@@ -44,25 +55,28 @@ def generate_data(n=10000, seed=42):
         df.loc[df.sample(frac=0.2).index, col] = np.nan
 
     # Introduce duplicates (5%)
-    duplicates = df.sample(frac=0.05)
-    df = pd.concat([df, duplicates], ignore_index=True)
+    df = pd.concat([df, df.sample(frac=0.05)], ignore_index=True)
 
-    # Introduce invalid formats (3%)
-    df["timestamp"] = df["timestamp"].astype("object")  # important
+    # Introduce invalid timestamp formats (3%)
+    df["timestamp"] = df["timestamp"].astype("object")
     invalid_idx = df.sample(frac=0.03).index
     df.loc[invalid_idx, "timestamp"] = "invalid_date"
 
     return df
 
 
-# -----------------------------
-# 2. DATA QUALITY METRICS
-# -----------------------------
+# =========================================================
+# 2. DATA QUALITY (DQ) METRICS
+# =========================================================
 def assess_dq(df):
-    total_cells = df.shape[0] * df.shape[1]
-    missing = df.isnull().sum().sum()
+    """
+    Computes completeness, duplicate rate and format validity
+    as defined in the assignment.
+    """
 
-    completeness = 1 - (missing / total_cells)
+    total_cells = df.shape[0] * df.shape[1]
+    missing_cells = df.isnull().sum().sum()
+    completeness = 1 - (missing_cells / total_cells)
 
     duplicate_rate = 1 - (df.duplicated().sum() / len(df))
 
@@ -86,53 +100,69 @@ def assess_dq(df):
     }
 
 
-# -----------------------------
-# 3. DDQ METRICS (KL-DIVERGENCE)
-# -----------------------------
-def kl_divergence(p, q):
-    return entropy(p, q)
-
+# =========================================================
+# 3. DISTRIBUTIONAL DATA QUALITY (DDQ)
+# =========================================================
 def assess_ddq(train_df, prod_distributions):
+    """
+    Computes KL divergence between production and training
+    distributions for each specified feature.
+    """
+
     metrics = {}
 
     for feature, prod_dist in prod_distributions.items():
         train_counts = Counter(train_df[feature].dropna())
         train_total = sum(train_counts.values())
 
-        train_dist = []
-        prod_dist_list = []
+        train_probs = []
+        prod_probs = []
 
-        for k in prod_dist:
-            train_dist.append(train_counts.get(k, 0) / train_total)
-            prod_dist_list.append(prod_dist[k])
+        # Ensure consistent support ordering
+        for value in prod_dist.keys():
+            train_probs.append(train_counts.get(value, 0) / train_total)
+            prod_probs.append(prod_dist[value])
 
-        kl = kl_divergence(prod_dist_list, train_dist)
-        metrics[feature] = round(float(kl), 4)
+        # KL(P_prod || P_train)
+        kl_value = entropy(prod_probs, train_probs)
+        metrics[feature] = round(float(kl_value), 4)
 
     return metrics
 
 
-# -----------------------------
+# =========================================================
 # 4. DATA CLEANING
-# -----------------------------
+# =========================================================
 def clean_data(df):
+    """
+    Applies minimal cleaning:
+    - Remove duplicates
+    - Coerce timestamps
+    - Drop rows missing critical fields
+    """
+
     df = df.drop_duplicates().copy()
+    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
 
-    df.loc[:, "timestamp"] = pd.to_datetime(
-        df["timestamp"], errors="coerce"
-    )
-
-    df = df.dropna(
-        subset=["customer_id", "product_category", "sentiment", "timestamp"]
-    ).copy()
+    df = df.dropna(subset=[
+        "customer_id",
+        "customer_segment",
+        "product_category",
+        "sentiment",
+        "timestamp"
+    ]).copy()
 
     return df
 
 
-# -----------------------------
+# =========================================================
 # 5. REPORT GENERATION
-# -----------------------------
+# =========================================================
 def generate_report(dq_metrics, ddq_metrics):
+    """
+    Generates structured JSON report with pass/fail logic.
+    """
+
     report = {
         "DQ_Metrics": {
             "Completeness": {
@@ -155,7 +185,7 @@ def generate_report(dq_metrics, ddq_metrics):
     for feature, kl in ddq_metrics.items():
         passed = bool(kl < 0.1)
         report["DDQ_Metrics"][feature] = {
-            "KL_Divergence": float(kl),
+            "KL_Divergence": kl,
             "pass": passed
         }
         if not passed:
@@ -164,15 +194,23 @@ def generate_report(dq_metrics, ddq_metrics):
     return report
 
 
-
-# -----------------------------
+# =========================================================
 # MAIN EXECUTION
-# -----------------------------
+# =========================================================
 if __name__ == "__main__":
-    df = generate_data()
 
+    df = generate_data()
     dq_metrics = assess_dq(df)
 
+    # Convert timestamp to time buckets for temporal DDQ
+    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+    df["time_bucket"] = pd.cut(
+        df["timestamp"].dt.year,
+        bins=[2018, 2020, 2021, 2025],
+        labels=["pre_covid", "covid", "post_covid"]
+    )
+
+    # Production reference distributions
     production_distributions = {
         "product_category": {
             "Electronics": 0.5,
@@ -183,13 +221,21 @@ if __name__ == "__main__":
             "positive": 0.45,
             "neutral": 0.35,
             "negative": 0.20
+        },
+        "customer_segment": {
+            "VIP": 0.20,
+            "regular": 0.60,
+            "new": 0.20
+        },
+        "time_bucket": {
+            "pre_covid": 0.25,
+            "covid": 0.25,
+            "post_covid": 0.50
         }
     }
 
     ddq_metrics = assess_ddq(df, production_distributions)
-
     cleaned_df = clean_data(df)
-
     report = generate_report(dq_metrics, ddq_metrics)
 
     with open("part1_dq_ddq/quality_report.json", "w") as f:
