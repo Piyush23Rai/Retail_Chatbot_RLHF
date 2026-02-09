@@ -1,28 +1,37 @@
 # Part 1 – Data Quality (DQ) & Distributional Data Quality (DDQ)
 
 ## Objective
-Assess and improve data quality for an ecommerce chatbot using synthetic retail conversation data.
+Evaluate data readiness for an ecommerce chatbot by assessing
+intrinsic data quality and distributional alignment with production.
 
-## Components
-- Synthetic data generation with realistic noise
-- Data Quality (DQ) metrics
-- Distributional Data Quality (DDQ) using KL-Divergence
-- Automated JSON reporting
+## Dataset
+10,000 synthetic retail chat conversations with:
+- customer_id
+- customer_segment (VIP, regular, new)
+- product_category
+- sentiment
+- timestamp
+- outcome
+
+## Data Quality (DQ) Metrics
+| Metric | Threshold |
+|-----|-----|
+Completeness | ≥ 95%
+Duplicate Rate | ≥ 98%
+Format Validity | ≥ 99%
+
+## Distributional Data Quality (DDQ)
+KL divergence computed for:
+- Product Category Balance
+- Sentiment Distribution
+- Customer Segment Representation
+- Temporal Consistency (pre/post COVID)
+
+Acceptance: KL < 0.1
 
 ## Files
 - dq_ddq.py : End-to-end pipeline
 - quality_report.json : Metrics output
-
-## Metrics Used
-### Data Quality
-- Completeness ≥ 95%
-- Duplicate Rate ≥ 98%
-- Format Validity ≥ 99%
-
-### Distributional Data Quality
-- KL-Divergence < 0.1 for:
-  - Product Category
-  - Sentiment
 
 ## Execution
 ```bash
