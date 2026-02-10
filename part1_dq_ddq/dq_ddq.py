@@ -39,7 +39,7 @@ def generate_data(n=10000, seed=42):
     data = []
 
     for _ in range(n):
-        
+
         sentiment = np.random.choice(sentiments, p=sentiment_probs)
         product_category = np.random.choice(categories, p=category_probs)
         template = random.choice(CONVERSATION_TEMPLATES[sentiment])
@@ -153,13 +153,18 @@ def clean_data(df):
     df = df.drop_duplicates().copy()
     df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
 
-    df = df.dropna(subset=[
+    cleaned_df = df.dropna(subset=[
         "customer_id",
         "customer_segment",
         "product_category",
         "sentiment",
         "timestamp"
     ]).copy()
+
+    cleaned_df.to_csv(
+        "part1_dq_ddq/cleaned_conversations.csv",
+        index=False
+    )
 
     return df
 
