@@ -31,8 +31,9 @@ Acceptance: KL < 0.1
 
 ## Files
 - dq_ddq.py : End-to-end pipeline
+- text_templates.py: Conversation templates for synthetic data generator
 - quality_report.json : Metrics output
 
 ## Execution
 ```bash
-python dq_ddq.py
+python -m part1_dq_ddq.dq_ddq

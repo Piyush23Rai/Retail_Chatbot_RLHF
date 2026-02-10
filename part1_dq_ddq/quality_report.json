@@ -5,7 +5,7 @@
             "pass": false
         },
         "Duplicate_Rate": {
-            "value": 0.938,
+            "value": 0.953,
             "pass": false
         },
         "Format_Validity": {
@@ -15,19 +15,19 @@
     },
     "DDQ_Metrics": {
         "product_category": {
-            "KL_Divergence": 0.0276,
+            "KL_Divergence": 0.0277,
             "pass": true
         },
         "sentiment": {
-            "KL_Divergence": 0.006,
+            "KL_Divergence": 0.0075,
             "pass": true
         },
         "customer_segment": {
-            "KL_Divergence": 0.007,
+            "KL_Divergence": 0.0092,
             "pass": true
         },
         "time_bucket": {
-            "KL_Divergence": 0.0548,
+            "KL_Divergence": 0.0551,
             "pass": true
         }
     },
