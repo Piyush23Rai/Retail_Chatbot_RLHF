@@ -148,25 +148,51 @@ def clean_data(df):
     - Remove duplicates
     - Coerce timestamps
     - Drop rows missing critical fields
+    - Clean conversation_text safely
     """
 
+    # Remove duplicates
     df = df.drop_duplicates().copy()
+
+    # Coerce timestamp
     df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
 
-    cleaned_df = df.dropna(subset=[
+    # Drop rows where conversation_text is NaN FIRST
+    df = df.dropna(subset=["conversation_text"])
+
+    # Now safely clean the column
+    df["conversation_text"] = (
+        df["conversation_text"]
+        .astype(str)
+        .str.strip()
+    )
+
+    # Drop empty strings after strip
+    df = df[df["conversation_text"] != ""]
+
+    # Drop rows missing other critical fields
+    df = df.dropna(subset=[
         "customer_id",
         "customer_segment",
         "product_category",
         "sentiment",
         "timestamp"
-    ]).copy()
+    ])
 
-    cleaned_df.to_csv(
-        "part1_dq_ddq/cleaned_conversations.csv",
+    # Reset index once at the end
+    df = df.reset_index(drop=True)
+
+    # Final sanity checks (these SHOULD pass now)
+    assert df["conversation_text"].isna().sum() == 0
+    assert df["conversation_text"].apply(lambda x: isinstance(x, str)).all()
+
+    df.to_csv(
+        "part1_dq_ddq/cleaned_conv.csv",
         index=False
     )
 
     return df
+
 
 
 # =========================================================
