@@ -20,5 +20,6 @@ MAX_SEQ_LEN = 50
 GAMMA = 0.99  # discount factor (conceptual MDP framing)
 
 DATA_PATH = BASE_DIR.parent / "part1_dq_ddq" / "cleaned_conv.csv"
+VOCAB_PATH = BASE_DIR.parent / "part3_pretraining" / "vocab.json"
 MODEL_PATH = BASE_DIR.parent / "part3_pretraining" / "pretrained_model.pt"
 LOSS_PLOT_PATH = BASE_DIR.parent / "part3_pretraining" / "loss_curves.png"

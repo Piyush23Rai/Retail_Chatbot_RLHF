@@ -1,5 +1,5 @@
 # part3_pretraining/pretraining.py
-
+import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -154,6 +154,10 @@ def prepare_pretraining_data():
 
     vocab = ["<PAD>", "<UNK>"] + list(counter.keys())
     word2idx = {w: i for i, w in enumerate(vocab)}
+
+    # save vocabulary (to be used during SFT)
+    with open(VOCAB_PATH, "w") as f:
+        json.dump(word2idx, f)
 
     # -------------------------
     # Datasets
