@@ -108,9 +108,11 @@ def create_sft_dataset():
 
     data = []
 
+    pairs = list(zip(sample_contexts, sample_responses))
+    
+
     for i in range(SFT_DATA_SIZE):
-        context = random.choice(sample_contexts)
-        response = random.choice(sample_responses)
+        context, response = random.choice(pairs)
 
         quality = 1 if i < MANUAL_LABEL_SIZE else 0
 
@@ -136,7 +138,13 @@ def train_sft(pretrained_model, sft_data, epochs=EPOCHS):
     # texts = [d["context"] + " " + d["response"] for d in sft_data]
     # vocab = build_vocab(texts)
 
-    dataset = SFTDataset(sft_data, vocab)
+    # Use only high-quality examples
+    filtered_data = [d for d in sft_data if d["high_quality"] == 1]
+
+    print(f"Training on {len(filtered_data)} high-quality examples")
+
+    dataset = SFTDataset(filtered_data, vocab)
+    
     loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     model = pretrained_model

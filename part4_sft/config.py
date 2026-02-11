@@ -18,6 +18,6 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 PRETRAINED_PATH = BASE_DIR.parent / "part3_pretraining" / "pretrained_model.pt"
 SFT_MODEL_PATH = BASE_DIR.parent / "part4_sft" / "sft_model.pt"
 SFT_DATA_PATH = BASE_DIR.parent / "part4_sft" / "sft_data.json"
-LOSS_CURVE = BASE_DIR.parent / "part4_sft" / "sft_loss_curve.png"
+LOSS_CURVE_PATH = BASE_DIR.parent / "part4_sft" / "sft_loss_curve.png"
 EVAL_PATH = BASE_DIR.parent / "part4_sft" / "evaluation.json"
 VOCAB_PATH = BASE_DIR.parent / "part3_pretraining" / "vocab.json"
