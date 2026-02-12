@@ -84,6 +84,26 @@ class SFTDataset(Dataset):
 # 1️⃣ Create SFT Dataset
 # ===============================
 
+def generate_bad_response(context):
+    generic_responses = [
+        "Thank you for your message.",
+        "We will get back to you.",
+        "Please contact support.",
+        "Noted.",
+        "Okay.",
+        "We appreciate your feedback."
+    ]
+
+    irrelevant_responses = [
+        "Our premium laptop is available now.",
+        "We have new arrivals in electronics.",
+        "Check our website for more details.",
+        "You can browse our catalog online."
+    ]
+
+    return random.choice(generic_responses + irrelevant_responses)
+
+
 def get_base_pairs():
     return {
         # Product recommendation
@@ -127,35 +147,42 @@ def get_base_pairs():
 
 
 def create_sft_dataset():
-    """
-    Generate 5,000 (context, response) pairs
-    Manually label 500 as high-quality
-    """
-
 
     data = []
 
     base_pairs = get_base_pairs()
     contexts = list(base_pairs.keys())
-    
 
-    for i in range(SFT_DATA_SIZE):
+    # First 500 = high quality
+    for _ in range(2000):
         context = random.choice(contexts)
         response = base_pairs[context]
-
-        quality = 1 if i < MANUAL_LABEL_SIZE else 0
 
         data.append({
             "context": context,
             "response": response,
-            "high_quality": quality
+            "high_quality": 1
         })
+
+    # Remaining 3000 = bad quality
+    for _ in range(3000):
+        context = random.choice(contexts)
+        bad_response = generate_bad_response(context)
+
+        data.append({
+            "context": context,
+            "response": bad_response,
+            "high_quality": 0
+        })
+
+    random.shuffle(data)
 
     with open(SFT_DATA_PATH, "w") as f:
         json.dump(data, f, indent=4)
 
-    print(f"SFT dataset saved to {SFT_DATA_PATH}")
+    print("SFT dataset saved.")
     return data
+
 
 
 # ===============================
@@ -168,7 +195,7 @@ def train_sft(pretrained_model, sft_data, epochs=EPOCHS):
     # vocab = build_vocab(texts)
 
     # Use only high-quality examples
-    filtered_data = [d for d in sft_data if d["high_quality"] == 1]
+    filtered_data = [d for d in sft_data if d["high_quality"] == 1][:500]
 
     print(f"Training on {len(filtered_data)} high-quality examples")
 
@@ -248,7 +275,7 @@ def generate_response(model, context, vocab, max_len=50, temperature=TEMPERATURE
         # Prevent PAD token generation
         probs[vocab["<PAD>"]] = 0
         probs = probs / probs.sum()
-        
+
         next_token = torch.multinomial(probs, 1).item()
 
         if next_token == vocab["<EOS>"]:
