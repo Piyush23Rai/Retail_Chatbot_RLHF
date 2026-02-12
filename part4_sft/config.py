@@ -6,13 +6,13 @@ BASE_DIR = Path(__file__).resolve().parent
 # ===============================
 # Configuration
 # ===============================
-
+TEMPERATURE = 0.5
 SFT_DATA_SIZE = 5000
 MANUAL_LABEL_SIZE = 500
 BATCH_SIZE = 32
-EPOCHS = 3
+EPOCHS = 5
 LEARNING_RATE = 5e-5
-MAX_LEN = 256
+MAX_LEN = 64
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 PRETRAINED_PATH = BASE_DIR.parent / "part3_pretraining" / "pretrained_model.pt"

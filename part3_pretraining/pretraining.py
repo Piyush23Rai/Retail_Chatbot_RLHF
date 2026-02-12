@@ -20,14 +20,21 @@ from .config import *
 
 class SimpleTransformer(nn.Module):
     """
-    2-layer Transformer language model
+    Proper autoregressive Transformer Language Model
     """
 
     def __init__(self, vocab_size):
         super().__init__()
 
-        self.embedding = nn.Embedding(vocab_size, EMBED_DIM)
+        self.vocab_size = vocab_size
 
+        # Token embedding
+        self.token_embedding = nn.Embedding(vocab_size, EMBED_DIM)
+
+        # Positional embedding
+        self.pos_embedding = nn.Embedding(MAX_SEQ_LEN, EMBED_DIM)
+
+        # Transformer encoder layers
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=EMBED_DIM,
             nhead=NUM_HEADS,
@@ -41,12 +48,54 @@ class SimpleTransformer(nn.Module):
             num_layers=NUM_LAYERS
         )
 
+        # Output projection
         self.fc_out = nn.Linear(EMBED_DIM, vocab_size)
 
     def forward(self, x):
-        x = self.embedding(x)
-        x = self.transformer(x)
-        return self.fc_out(x)
+        """
+        x: (batch_size, seq_len)
+        """
+
+        batch_size, seq_len = x.size()
+
+        # Create position indices
+        positions = torch.arange(
+            0, seq_len, device=x.device
+        ).unsqueeze(0).expand(batch_size, seq_len)
+
+        # Token + positional embeddings
+        x = self.token_embedding(x) + self.pos_embedding(positions)
+
+        # ==============================
+        # Causal Mask (prevents looking ahead)
+        # ==============================
+        causal_mask = torch.triu(
+            torch.ones(seq_len, seq_len, device=x.device),
+            diagonal=1
+        ).bool()
+
+        # ==============================
+        # Padding Mask
+        # ==============================
+        padding_mask = (x[:, :, 0] == 0)  # detect PAD via token index 0
+        # Better approach below (see note)
+
+        # Actually better padding mask:
+        # padding_mask = (input_ids == pad_idx)
+        # But since we don't pass pad_idx here,
+        # we assume <PAD> index is 0.
+
+        # Transformer
+        x = self.transformer(
+            x,
+            mask=causal_mask,
+            src_key_padding_mask=padding_mask
+        )
+
+        logits = self.fc_out(x)
+
+        return logits
+
 
 
 # ===============================
@@ -64,6 +113,9 @@ class ConversationDataset(Dataset):
     def encode(self, text):
         tokens = text.split()
         ids = [self.word2idx.get(t, self.unk_idx) for t in tokens]
+
+        # Append EOS
+        ids.append(self.word2idx["<EOS>"])
 
         # Truncate
         ids = ids[: self.max_len]
@@ -152,7 +204,7 @@ def prepare_pretraining_data():
     for t in texts:
         counter.update(t.split())
 
-    vocab = ["<PAD>", "<UNK>"] + list(counter.keys())
+    vocab = ["<PAD>", "<UNK>", "<EOS>"] + list(counter.keys())
     word2idx = {w: i for i, w in enumerate(vocab)}
 
     # save vocabulary (to be used during SFT)

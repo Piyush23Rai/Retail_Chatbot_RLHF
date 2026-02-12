@@ -58,3 +58,21 @@ CATEGORY_PHRASES = {
         "delivery handling"
     ]
 }
+
+AGENT_RESPONSES = {
+    "positive": [
+        "Thank you for your feedback!",
+        "We're glad you're satisfied with your purchase.",
+        "We appreciate your support."
+    ],
+    "neutral": [
+        "Let me provide that information for you.",
+        "Here are the details you requested.",
+        "I’ll help clarify that for you."
+    ],
+    "negative": [
+        "I apologize for the inconvenience.",
+        "Let me resolve this issue immediately.",
+        "We’re sorry for the trouble caused."
+    ]
+}

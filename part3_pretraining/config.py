@@ -15,7 +15,7 @@ DROPOUT = 0.1
 BATCH_SIZE = 32
 EPOCHS = 5
 LEARNING_RATE = 1e-3
-MAX_SEQ_LEN = 50
+MAX_SEQ_LEN = 64
 
 GAMMA = 0.99  # discount factor (conceptual MDP framing)
 

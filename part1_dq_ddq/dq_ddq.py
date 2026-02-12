@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 from collections import Counter
 from scipy.stats import entropy
-from .text_templates import CATEGORY_PHRASES, CONVERSATION_TEMPLATES
+from .text_templates import CATEGORY_PHRASES, CONVERSATION_TEMPLATES, AGENT_RESPONSES
 import random
 
 # =========================================================
@@ -44,8 +44,11 @@ def generate_data(n=10000, seed=42):
         product_category = np.random.choice(categories, p=category_probs)
         template = random.choice(CONVERSATION_TEMPLATES[sentiment])
         category_phrase = random.choice(CATEGORY_PHRASES[product_category])
+        agent_response = random.choice(AGENT_RESPONSES[sentiment])
 
-        conversation_text = f"{template} regarding {category_phrase}"
+        conversation_text = f"""
+        {template} regarding {category_phrase}, {agent_response}
+        """
 
         data.append({
             "customer_id": f"CUST_{np.random.randint(1, 4000)}",
